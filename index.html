@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fresita Factory 🍓</title>
+<style>
+:root{--bg:#fff0f5;--card:#fff;--ink:#6b1d3a;--pink:#ff5c8a;--soft:#ffd1df;--ok:#2e9e5b;--bad:#e0334f;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#2a1019;--card:#3b1a28;--ink:#ffe3ec;--soft:#5c2a3e;--ok:#5fd48c;--bad:#ff7088;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#2a1019;--card:#3b1a28;--ink:#ffe3ec;--soft:#5c2a3e;--ok:#5fd48c;--bad:#ff7088;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100vh;background:radial-gradient(circle,var(--soft) 2px,transparent 2.5px) 0 0/28px 28px var(--bg);color:var(--ink);font-family:ui-rounded,"Nunito","Segoe UI",system-ui,sans-serif}
+.wrap{max-width:720px;margin:auto;padding:14px}
+h1{margin:6px 0;text-align:center;font-size:2rem;color:var(--pink)}
+.sub{text-align:center;margin:0 0 14px;opacity:.85}
+.card{background:var(--card);border:3px solid var(--soft);border-radius:22px;padding:14px;margin:10px 0;box-shadow:0 4px 0 var(--soft)}
+.btn{font:inherit;font-weight:700;border:0;border-radius:999px;padding:10px 18px;background:var(--pink);color:#fff;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.18)}
+.btn:active{transform:translateY(2px);box-shadow:none}
+.btn.s{background:var(--soft);color:var(--ink);padding:6px 12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.tile{font:inherit;color:inherit;text-align:center;background:var(--card);border:3px solid var(--soft);border-radius:20px;padding:14px 8px;cursor:pointer}
+.tile:hover:not(:disabled){border-color:var(--pink)}
+.tile:disabled{opacity:.45;cursor:not-allowed}
+.tile .big{font-size:2.4rem;display:block}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.pill{display:inline-block;background:var(--soft);border-radius:999px;padding:4px 12px;font-weight:700;font-size:.9rem;margin:6px 0}
+.belt{text-align:center;background:repeating-linear-gradient(90deg,var(--card) 0 18px,var(--soft) 18px 22px)}
+.cur{background:var(--card);border-radius:18px;padding:8px;display:inline-block;min-width:170px}
+.fr{display:block;line-height:1.1;transition:transform .2s}
+.fr.verde{filter:hue-rotate(90deg) saturate(.7)}
+.chip{font-weight:700;font-size:.9rem}
+.next{margin-top:6px;font-size:1.5rem;opacity:.85}
+.msg{min-height:1.6em;text-align:center;font-weight:700}
+.msg.ok{color:var(--ok)}.msg.no{color:var(--bad)}
+.bins{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.bin{font:inherit;color:inherit;background:var(--card);border:3px solid var(--soft);border-radius:20px;padding:10px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
+.bin:hover{border-color:var(--pink);transform:translateY(-2px)}
+.bin .ic{font-size:2.2rem}
+.bin small{opacity:.8;min-height:2.4em;text-align:center}
+.bar{width:90%;height:10px;border-radius:9px;background:var(--soft);overflow:hidden;display:block}
+.bar u{display:block;height:100%;background:var(--pink);transition:width .25s}
+.mem{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.mc{font:inherit;font-size:2.2rem;aspect-ratio:1;border:3px solid var(--soft);border-radius:16px;background:var(--pink);color:#fff;cursor:pointer}
+.mc.o{background:var(--card)}.mc.d{background:var(--soft);opacity:.7}
+</style></head>
+<body><div class="wrap" id="v"></div>
+<script>
+/* ===== CÓMO AMPLIAR =====
+ 1) Más niveles: agrega un objeto a LEVELS (name, concept, fruits, size, time, bins).
+    Cada bin: {n:nombre, i:emoji, r:regla visible, ok:x=>condición, need:meta}.
+    Las reglas se evalúan en orden (SI / SINO SI / SINO).
+ 2) Más fruta: añade emoji en E y N.
+ 3) Más minijuegos: agrega una entrada a GAMES con {i, n, d, go}. */
+const $=s=>document.querySelector(s),R=a=>a[Math.random()*a.length|0];
+const E={fresa:"🍓",arandano:"🫐",cereza:"🍒",durazno:"🍑"},N={fresa:"fresa",arandano:"arándano",cereza:"cereza",durazno:"durazno"};
+const COMPOST={n:"Compost",i:"🌱",r:"SI está verde",ok:x=>!x.m,need:2};
+const LEVELS=[
+{name:"Primera cosecha",concept:"Condición SI / SINO",fruits:["fresa"],bins:[
+ {n:"Canasta",i:"🧺",r:"SI está madura",ok:x=>x.m,need:5},
+ {n:"Compost",i:"🌱",r:"SINO",ok:x=>1,need:3}]},
+{name:"Cajas por fruta",concept:"Condiciones en cadena (SINO SI)",fruits:["fresa","arandano","cereza"],bins:[
+ COMPOST,
+ {n:"Fresas",i:"🍓",r:"SINO SI es fresa",ok:x=>x.t=="fresa",need:3},
+ {n:"Arándanos",i:"🫐",r:"SINO SI es arándano",ok:x=>x.t=="arandano",need:3},
+ {n:"Cerezas",i:"🍒",r:"SINO",ok:x=>1,need:3}]},
+{name:"Tamaño y madurez",concept:"Operador Y (AND)",size:1,fruits:["fresa"],bins:[
+ COMPOST,
+ {n:"Exportación",i:"📦",r:"SI es grande Y madura",ok:x=>x.g&&x.m,need:4},
+ {n:"Mermelada",i:"🍯",r:"SINO",ok:x=>1,need:4}]},
+{name:"Contrarreloj",concept:"Operador O (OR) y contador de tiempo",size:1,time:50,fruits:["fresa","arandano"],bins:[
+ COMPOST,
+ {n:"Exportación",i:"📦",r:"SI es fresa Y grande",ok:x=>x.t=="fresa"&&x.g,need:3},
+ {n:"Smoothie",i:"🥤",r:"SI es arándano O chica",ok:x=>x.t=="arandano"||!x.g,need:5}]},
+{name:"Gran pedido",concept:"Todo combinado",size:1,time:70,fruits:["fresa","arandano","cereza","durazno"],bins:[
+ COMPOST,
+ {n:"Exportación",i:"📦",r:"SI es fresa Y grande",ok:x=>x.t=="fresa"&&x.g,need:3},
+ {n:"Tarta",i:"🥧",r:"SI es durazno O cereza",ok:x=>x.t=="durazno"||x.t=="cereza",need:3},
+ {n:"Mermelada",i:"🍯",r:"SINO",ok:x=>1,need:3}]}
+];
+const GAMES=[
+ {i:"🍓",n:"Clasificar fresitas",d:"Condiciones, ciclos y contadores",go:()=>levels()},
+ {i:"🃏",n:"Memoria dulce",d:"Encuentra las parejas con pocos intentos",go:()=>memory()}
+];
+let save={lvl:1,stars:{}};
+try{Object.assign(save,JSON.parse(localStorage.getItem("fresita")||"{}"))}catch(e){}
+const persist=()=>{try{localStorage.setItem("fresita",JSON.stringify(save))}catch(e){}};
+let st=null,tm=null,mem=null;
+const total=()=>Object.values(save.stars).reduce((a,b)=>a+b,0);
+
+function menu(){clearInterval(tm);st=null;
+$("#v").innerHTML=`<h1>🍓 Fresita Factory</h1><p class="sub">⭐ ${total()} estrellas</p>
+<div class="grid">${GAMES.map((g,k)=>`<button class="tile" onclick="GAMES[${k}].go()"><span class="big">${g.i}</span><b>${g.n}</b><br><small>${g.d}</small></button>`).join("")}</div>`}
+
+function levels(){clearInterval(tm);st=null;
+$("#v").innerHTML=`<div class="top"><button class="btn s" onclick="menu()">← Menú</button><b>Clasificar fresitas</b></div>
+<div class="grid" style="margin-top:12px">${LEVELS.map((L,k)=>{const s=save.stars[k]||0;return `<button class="tile" ${k+1>save.lvl?"disabled":""} onclick="play(${k})"><span class="big">${k+1>save.lvl?"🔒":E[L.fruits[0]]}</span><b>${k+1}. ${L.name}</b><br><small>${L.concept}</small><br>${"⭐".repeat(s)}${"☆".repeat(3-s)}</button>`}).join("")}</div>`}
+
+const rnd=L=>({t:R(L.fruits),g:L.size?Math.random()<.5:1,m:Math.random()<.65});
+const first=(L,x)=>L.bins.findIndex(b=>b.ok(x));
+function gen(){const L=st.L;
+const open=L.bins.map((b,i)=>b.need-st.c[i]-st.q.filter(x=>first(L,x)==i).length>0?i:-1).filter(i=>i>=0);
+let it=rnd(L);
+if(open.length){const tg=R(open);for(let k=0;k<300&&first(L,it)!=tg;k++)it=rnd(L)}
+return it}
+
+function play(n){clearInterval(tm);const L=LEVELS[n];
+st={n,L,c:L.bins.map(()=>0),q:[],err:0,turn:0,t:L.time||0,msg:"",cls:"",over:0};
+for(let k=0;k<4;k++)st.q.push(gen());
+if(L.time)tm=setInterval(()=>{st.t--;if(st.t<=0)end(0,"⏱ ¡Se acabó el tiempo!");else draw()},1000);
+draw()}
+
+function draw(){if(!st||st.over)return;const L=st.L,x=st.q[0];
+$("#v").innerHTML=`<div class="top"><button class="btn s" onclick="levels()">← Niveles</button><b>Nivel ${st.n+1}: ${L.name}</b><span>${"❤️".repeat(3-st.err)}${"🤍".repeat(st.err)}</span></div>
+<span class="pill">🔁 MIENTRAS falten pedidos · vuelta #${st.turn+1}${L.time?` · ⏱ ${st.t}s`:""}</span> <small>Aprendes: ${L.concept}</small>
+<div class="card belt"><div class="cur"><span class="fr ${x.m?"":"verde"}" style="font-size:${L.size&&!x.g?46:84}px">${E[x.t]}</span>
+<span class="chip">${N[x.t]} · ${x.m?"madura":"verde"}${L.size?" · "+(x.g?"grande":"chica"):""}</span></div>
+<div class="next">Siguientes: ${st.q.slice(1).map(y=>E[y.t]).join(" ")}</div></div>
+<div class="msg ${st.cls}">${st.msg||"Elige el contenedor correcto 👇"}</div>
+<div class="bins">${L.bins.map((b,i)=>{const c=Math.min(st.c[i],b.need);return `<button class="bin" onclick="pick(${i})"><span class="ic">${b.i}</span><b>${i+1}. ${b.n}</b><small>${b.r}</small><span class="bar"><u style="width:${c/b.need*100}%"></u></span><em>${c}/${b.need}</em></button>`}).join("")}</div>`}
+
+function pick(i){if(!st||st.over)return;const L=st.L,x=st.q.shift(),k=first(L,x);
+if(k==i){st.c[i]++;st.msg="✔ ¡Correcto!";st.cls="ok"}
+else{st.err++;st.msg=`✖ Iba en ${L.bins[k].n} (${L.bins[k].r})`;st.cls="no"}
+st.turn++;
+if(L.bins.every((b,j)=>st.c[j]>=b.need))return end(1);
+if(st.err>=3)return end(0,"💔 Te quedaste sin corazones");
+st.q.push(gen());draw()}
+
+function end(win,why){clearInterval(tm);st.over=1;const s=win?(st.err==0?3:st.err==1?2:1):0;
+if(win){save.stars[st.n]=Math.max(save.stars[st.n]||0,s);save.lvl=Math.max(save.lvl,st.n+2);persist()}
+const last=st.n>=LEVELS.length-1;
+$("#v").innerHTML=`<div class="card" style="text-align:center"><div style="font-size:4rem">${win?"🍓":"🥀"}</div>
+<h2>${win?"¡Pedido completado!":"Se echó a perder…"}</h2><p>${win?"⭐".repeat(s)+"☆".repeat(3-s)+`<br>Hiciste ${st.turn} vueltas del ciclo con ${st.err} errores.`:why}</p>
+<button class="btn" onclick="play(${st.n})">Reintentar</button>
+${win&&!last?`<button class="btn" onclick="play(${st.n+1})">Siguiente nivel →</button>`:""}
+<button class="btn s" onclick="levels()">Niveles</button></div>`}
+
+function memory(){const f=[..."🍓🫐🍒🍑🍋🍇"];
+mem={cards:[...f,...f].sort(()=>Math.random()-.5).map(e=>({e,o:0,d:0})),open:[],mv:0,lock:0};mdraw()}
+function mdraw(){const m=mem,won=m.cards.every(c=>c.d),s=m.mv<=9?3:m.mv<=13?2:1;
+$("#v").innerHTML=`<div class="top"><button class="btn s" onclick="menu()">← Menú</button><b>Memoria dulce</b></div>
+<span class="pill">🔁 MIENTRAS queden parejas · intentos: ${m.mv}</span>
+<div class="mem">${m.cards.map((c,i)=>`<button class="mc ${c.o?"o":""} ${c.d?"d":""}" onclick="flip(${i})">${c.o||c.d?c.e:"🍓"}</button>`).join("")}</div>
+${won?`<div class="card" style="text-align:center"><h2>¡Lo lograste! ${"⭐".repeat(s)}</h2><button class="btn" onclick="memory()">Jugar otra vez</button></div>`:""}`}
+function flip(i){const m=mem,c=m.cards[i];if(m.lock||c.o||c.d)return;c.o=1;m.open.push(i);
+if(m.open.length==2){m.mv++;const[a,b]=m.open.map(j=>m.cards[j]);
+if(a.e==b.e){a.d=b.d=1;a.o=b.o=0;m.open=[]}
+else{m.lock=1;setTimeout(()=>{a.o=b.o=0;m.open=[];m.lock=0;mdraw()},700)}}
+mdraw()}
+
+document.addEventListener("keydown",e=>{if(st&&!st.over&&/^[1-9]$/.test(e.key)&&st.L.bins[e.key-1])pick(e.key-1)});
+menu();
+</script></body></html>
